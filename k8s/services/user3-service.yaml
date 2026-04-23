@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user3-service
+  namespace: user3
+spec:
+  selector:
+    app: user3-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+

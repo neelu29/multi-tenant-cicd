@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multi-tenant-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx   # ✅ use this instead of the old annotation
+  tls:
+  - hosts:
+    - user1.example.com
+    - user2.example.com
+    - user3.example.com
+    secretName: multi-tenant-tls
+  rules:
+  - host: user1.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: user1-service
+            port:
+              number: 80
+  - host: user2.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: user2-service
+            port:
+              number: 80
+  - host: user3.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: user3-service
+            port:
+              number: 80
+
