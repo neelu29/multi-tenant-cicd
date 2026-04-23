@@ -1,0 +1,50 @@
+name: Multi-Tenant CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - user1
+      - user2
+      - user3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.29.0'
+
+    # ⚠️ Instead of using a secret, we assume kubeconfig is already available
+    # You can mount it in your runner or skip this step if you apply manually
+
+    - name: Deploy to Kubernetes
+      run: |
+        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        kubectl apply -f k8s/namespaces/${NAMESPACE}-namespace.yaml || true
+        kubectl apply -f k8s/deployments/${NAMESPACE}-deployment.yaml
+        kubectl apply -f k8s/services/${NAMESPACE}-service.yaml
+        kubectl apply -f k8s/ingress/multi-tenant-ingress.yaml
+
+    - name: Verify Deployment
+      run: |
+        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        kubectl rollout status deployment/${NAMESPACE}-deployment -n $NAMESPACE
+
+    - name: Rollback on Failure
+      if: failure()
+      run: |
+        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        kubectl rollout undo deployment/${NAMESPACE}-deployment -n $NAMESPACE
+
+    - name: Trigger Kafka Event
+      run: |
+        echo "WebsiteCreated event for ${{ github.ref_name }}" | \
+        echo "Simulated Kafka publish"
+
