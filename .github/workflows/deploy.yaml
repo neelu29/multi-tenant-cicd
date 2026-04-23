@@ -26,7 +26,7 @@ jobs:
 
     - name: Deploy to Kubernetes
       run: |
-        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        NAMESPACE=$GITHUB_REF_NAME
         kubectl apply -f k8s/namespaces/${NAMESPACE}-namespace.yaml || true
         kubectl apply -f k8s/deployments/${NAMESPACE}-deployment.yaml
         kubectl apply -f k8s/services/${NAMESPACE}-service.yaml
@@ -34,13 +34,13 @@ jobs:
 
     - name: Verify Deployment
       run: |
-        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        NAMESPACE=$GITHUB_REF_NAME
         kubectl rollout status deployment/${NAMESPACE}-deployment -n $NAMESPACE
 
     - name: Rollback on Failure
       if: failure()
       run: |
-        NAMESPACE=$(echo ${{ github.ref_name }} | sed 's/main/default/')
+        NAMESPACE=$GITHUB_REF_NAME
         kubectl rollout undo deployment/${NAMESPACE}-deployment -n $NAMESPACE
 
     - name: Trigger Kafka Event
